@@ -1,4 +1,4 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, Response, Request } from 'express';
 import { ValidatedRequest } from 'express-joi-validation';
 import { users_credentials } from '../../database/models/users_credentials';
 import * as bcrypt from 'bcrypt';
@@ -29,7 +29,7 @@ export const createCredentials = async (
       created_at: new Date(),
       updated_at: new Date(),
     });
-    res.status(200).json(user);
+    res.status(201).json(user);
   } catch (error) {
     next(error);
   }
@@ -71,13 +71,31 @@ export const authenticate = async (
     next(error);
   }
 };
-export const protect = async (req: any, res: Response, next: NextFunction) => {
+interface ProtectedRoute {
+  requestHttpType: string;
+  path: string;
+}
+const protectedRoutes: ProtectedRoute[] = [];
+
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const isProtectedRoute = protectedRoutes.find(
+    route => route.path === req.url && route.requestHttpType === req.method,
+  );
+  if (!isProtectedRoute) {
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader) return res.status(401).send({ error: 'No token provided' });
 
   jwt.verify(
     authHeader,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     ACCESS_TOKEN_SECRET!,
     async (err: VerifyErrors | null, decoded: any) => {
       if (err) return res.status(401).send({ error: 'Token invalid' });

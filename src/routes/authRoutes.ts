@@ -1,24 +1,21 @@
 import express from 'express';
 import * as AuthController from '../controllers/AuthController';
-import {
-  authenticateSchema,
-  createCredentialsSchema,
-} from '../controllers/AuthController/schemas';
+import { authenticateSchema } from '../controllers/AuthController/schemas';
 import { SchemaTypes, validation } from '../helpers/validation';
 
 const authRoutes = express.Router();
 
-authRoutes.post(
-  '/',
-  (req, res, next) =>
-    validation(
-      [{ type: SchemaTypes.BODY, schema: createCredentialsSchema }],
-      req,
-      res,
-      next,
-    ),
-  AuthController.createCredentials,
-);
+// authRoutes.post(
+//   '/',
+//   (req, res, next) =>
+//     validation(
+//       [{ type: SchemaTypes.BODY, schema: createCredentialsSchema }],
+//       req,
+//       res,
+//       next,
+//     ),
+//   AuthController.createCredentials,
+// );
 
 authRoutes.post(
   '/login',
