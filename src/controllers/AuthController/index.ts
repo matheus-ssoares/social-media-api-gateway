@@ -65,27 +65,32 @@ export const authenticate = async (
       { credential_token_version: user.credential_token_version + 1 },
       { where: { id: user.id } },
     );
-    console.log(user);
-    res.status(200).json({ user, token });
+    res.status(200).json({ email: user.email, token });
   } catch (error) {
     next(error);
   }
 };
-interface ProtectedRoute {
+interface OpenRoute {
   requestHttpType: string;
   path: string;
 }
-const protectedRoutes: ProtectedRoute[] = [];
+const openRoutes: OpenRoute[] = [
+  {
+    path: '/social-users/users',
+    requestHttpType: 'POST',
+  },
+];
 
 export const protect = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const isProtectedRoute = protectedRoutes.find(
-    route => route.path === req.url && route.requestHttpType === req.method,
+  const isOpenRoutes = openRoutes.find(
+    route =>
+      route.path === req.originalUrl && route.requestHttpType === req.method,
   );
-  if (!isProtectedRoute) {
+  if (isOpenRoutes) {
     return next();
   }
 

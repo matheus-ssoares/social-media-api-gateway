@@ -15,8 +15,9 @@ export async function isCreateUserRequest(
     req.originalUrl.includes('/users') && req.method === 'POST';
 
   if (!isCreateRequest) {
-    next();
+    return next();
   }
+
   const transaction = await sequelize.transaction();
 
   const email = req.body?.email;
