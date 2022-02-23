@@ -5,7 +5,6 @@ import './database/connection';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import { handleError } from './helpers/error';
-import { homedir } from 'os';
 import authRoutes from './routes/authRoutes';
 import postsServiceRoutes from './routes/postsServiceRoutes';
 import usersServiceRoutes from './routes/usersServiceRoutes';
