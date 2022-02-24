@@ -1,17 +1,9 @@
 import express from 'express';
-import httpProxy from 'express-http-proxy';
-import dotenv from 'dotenv';
+import { protect } from '../controllers/AuthController';
+import { isMultipartRequest } from '../helpers/isMultipartRequest';
 
 const postsServiceRoutes = express.Router();
 
-dotenv.config();
-
-const PORT = process.env.SOCIAL_POSTS_ENDPOINT;
-
-const postsServiceProxy = httpProxy(PORT!, {
-  reqBodyEncoding: null,
-  parseReqBody: false,
-});
-postsServiceRoutes.all('*', postsServiceProxy);
+postsServiceRoutes.all('*', protect, isMultipartRequest);
 
 export default postsServiceRoutes;
