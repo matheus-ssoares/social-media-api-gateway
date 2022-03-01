@@ -25,7 +25,7 @@ export async function isCreateUserRequest(
   const password = req.body?.password;
 
   if (!email || !password) {
-    next();
+    return next();
   }
   try {
     await users_credentials.create(
@@ -42,8 +42,9 @@ export async function isCreateUserRequest(
       ...req.body,
     });
 
-    transaction.commit();
-    return res.json(result.data);
+    await transaction.commit();
+
+    return res.status(200).send(result.data);
   } catch (error) {
     transaction.rollback();
     if (axios.isAxiosError(error)) {

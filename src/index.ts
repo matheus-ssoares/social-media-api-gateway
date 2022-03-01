@@ -31,7 +31,6 @@ app.use('/social-posts', postsServiceRoutes);
 const expressServer = http.createServer(app);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.log(err);
   handleError(err, res);
 });
 

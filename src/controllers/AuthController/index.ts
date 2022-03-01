@@ -3,11 +3,12 @@ import { ValidatedRequest } from 'express-joi-validation';
 import { users_credentials } from '../../database/models/users_credentials';
 import * as bcrypt from 'bcrypt';
 import jwt, { VerifyErrors } from 'jsonwebtoken';
+import { compare } from 'bcrypt';
 import {
   AuthenticateRequestSchema,
   CreateCredentialsRequestSchema,
 } from './schemas';
-import { NotFoundError } from '../../helpers/error';
+import { GenericError, NotFoundError } from '../../helpers/error';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -50,6 +51,12 @@ export const authenticate = async (
     if (!user) {
       throw new NotFoundError();
     }
+    const isValid = await compare(body.password, user.password);
+
+    console.log(isValid);
+    if (!isValid) {
+      throw new GenericError(400, 'e-email or password is invalid');
+    }
 
     const token = jwt.sign(
       {
@@ -70,14 +77,28 @@ export const authenticate = async (
     next(error);
   }
 };
-interface OpenRoute {
+interface SpecialRoute {
   requestHttpType: string;
   path: string;
+  isPersonalRoute?: boolean;
+  isOpen: boolean;
 }
-const openRoutes: OpenRoute[] = [
+const specialRoutes: SpecialRoute[] = [
   {
     path: '/social-users/users',
     requestHttpType: 'POST',
+    isOpen: true,
+  },
+  {
+    path: '/social-users/users',
+    requestHttpType: 'GET',
+    isOpen: true,
+  },
+  {
+    path: '/social-users/users',
+    requestHttpType: 'PATCH',
+    isOpen: false,
+    isPersonalRoute: true,
   },
 ];
 
@@ -86,11 +107,11 @@ export const protect = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const isOpenRoutes = openRoutes.find(
+  const isSpecialRoute = specialRoutes.find(
     route =>
       route.path === req.originalUrl && route.requestHttpType === req.method,
   );
-  if (isOpenRoutes) {
+  if (isSpecialRoute && isSpecialRoute.isOpen) {
     return next();
   }
 
@@ -108,6 +129,9 @@ export const protect = async (
       const user = await users_credentials.findOne({
         where: { id: decoded.id },
       });
+      if (user && user.id !== decoded.id) {
+        return res.sendStatus(401);
+      }
 
       if (user && decoded.token_version === user.credential_token_version) {
         return next();
