@@ -28,13 +28,13 @@ export async function isCreateUserRequest(
     return next();
   }
   try {
-    await users_credentials.create(
+    const createdUser = await users_credentials.create(
       {
         email,
         password: await hash(password, 14),
         credential_token_version: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       { transaction },
     );
@@ -42,6 +42,12 @@ export async function isCreateUserRequest(
       ...req.body,
     });
 
+    await createdUser.update(
+      {
+        external_id: result.data.id,
+      },
+      { transaction },
+    );
     await transaction.commit();
 
     return res.status(200).send(result.data);

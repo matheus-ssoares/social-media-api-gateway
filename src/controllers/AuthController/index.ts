@@ -27,8 +27,8 @@ export const createCredentials = async (
       email: body.email,
       password: await bcrypt.hash(body.password, 14),
       credential_token_version: 0,
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     res.status(201).json(user);
   } catch (error) {
@@ -53,7 +53,6 @@ export const authenticate = async (
     }
     const isValid = await compare(body.password, user.password);
 
-    console.log(isValid);
     if (!isValid) {
       throw new GenericError(400, 'e-email or password is invalid');
     }
@@ -94,12 +93,6 @@ const specialRoutes: SpecialRoute[] = [
     requestHttpType: 'GET',
     isOpen: true,
   },
-  {
-    path: '/social-users/users',
-    requestHttpType: 'PATCH',
-    isOpen: false,
-    isPersonalRoute: true,
-  },
 ];
 
 export const protect = async (
@@ -107,10 +100,17 @@ export const protect = async (
   res: Response,
   next: NextFunction,
 ) => {
+  const findPathNameDeadline =
+    req.originalUrl.indexOf('?') !== -1
+      ? req.originalUrl.indexOf('?')
+      : req.originalUrl.length;
+
   const isSpecialRoute = specialRoutes.find(
     route =>
-      route.path === req.originalUrl && route.requestHttpType === req.method,
+      route.path === req.originalUrl.substring(0, findPathNameDeadline) &&
+      route.requestHttpType === req.method,
   );
+
   if (isSpecialRoute && isSpecialRoute.isOpen) {
     return next();
   }
@@ -123,13 +123,17 @@ export const protect = async (
     authHeader,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     ACCESS_TOKEN_SECRET!,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (err: VerifyErrors | null, decoded: any) => {
       if (err) return res.status(401).send({ error: 'Token invalid' });
 
       const user = await users_credentials.findOne({
         where: { id: decoded.id },
       });
-      if (user && user.id !== decoded.id) {
+      const isPersonalRoute = isSpecialRoute && isSpecialRoute.isPersonalRoute;
+      const idIsDifferent = user && user.external_id !== req.query.id;
+
+      if (isPersonalRoute && idIsDifferent) {
         return res.sendStatus(401);
       }
 
