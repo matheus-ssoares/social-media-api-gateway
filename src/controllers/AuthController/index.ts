@@ -54,7 +54,7 @@ export const authenticate = async (
     const isValid = await compare(body.password, user.password);
 
     if (!isValid) {
-      throw new GenericError(400, 'e-email or password is invalid');
+      throw new GenericError(400, 'e-mail or password is invalid');
     }
 
     const token = jwt.sign(
@@ -114,7 +114,6 @@ export const protect = async (
   if (isSpecialRoute && isSpecialRoute.isOpen) {
     return next();
   }
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader) return res.status(401).send({ error: 'No token provided' });

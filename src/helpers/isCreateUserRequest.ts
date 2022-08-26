@@ -3,6 +3,7 @@ import { sequelize } from '../database/connection';
 import { users_credentials } from '../database/models/users_credentials';
 import { hash } from 'bcrypt';
 import axios from 'axios';
+import UniqueConstraintError from 'sequelize/lib/errors/validation/unique-constraint-error';
 
 const usersServiceHost = 'http://localhost:5000';
 
@@ -53,7 +54,13 @@ export async function isCreateUserRequest(
     return res.status(200).send(result.data);
   } catch (error) {
     transaction.rollback();
+    if (error instanceof UniqueConstraintError) {
+      return res
+        .status(400)
+        .json({ status: 'error', message: error.errors[0].message });
+    }
     if (axios.isAxiosError(error)) {
+      console.log(error.response?.data);
       return res
         .status(error.response?.status ?? 500)
         .json(error.response?.data ?? 'Internal server error');
